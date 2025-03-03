@@ -4,7 +4,7 @@ from flask_login import UserMixin
 from typing import Optional
 from datetime import datetime, timezone
 from sqlalchemy.orm import Mapped, mapped_column
-from src.db import db
+from ..db import db
 
 class User(db.Model, UserMixin):
     id: Mapped[int] = mapped_column(primary_key=True)

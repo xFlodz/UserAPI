@@ -1,9 +1,9 @@
 from flask import Blueprint
 
-from src.blueprints.user import user_bp
-from src.blueprints.post import post_bp
-from src.blueprints.file import file_bp
-from src.blueprints.tag import tag_bp
+from ..blueprints.user import user_bp
+from ..blueprints.post import post_bp
+from ..blueprints.file import file_bp
+from ..blueprints.tag import tag_bp
 
 api_bp = Blueprint('api', __name__)
 

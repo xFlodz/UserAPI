@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.services.user_service import register_user, login_user, refresh_token, logout_user_service, get_adm, add_editor_service, get_all_editors, delete_editor_service
+from ..services.user_service import register_user, login_user, refresh_token, logout_user_service, get_adm, add_editor_service, get_all_editors, delete_editor_service
 
 user_bp = Blueprint('user', __name__)
 

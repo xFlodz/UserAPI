@@ -1,8 +1,8 @@
 from flask import jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity
-from src.models.user_model import User
-from src import db
-from src.utils.user_utils import generate_password
+from ..models.user_model import User
+from .. import db
+from ..utils.user_utils import generate_password
 
 
 def register_user(data):

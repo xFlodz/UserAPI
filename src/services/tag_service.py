@@ -1,6 +1,6 @@
 from flask import jsonify
-from src.db import db
-from src.models import Tag, TagInPost, User
+from ..db import db
+from ..models import Tag, TagInPost, User
 from datetime import datetime
 
 

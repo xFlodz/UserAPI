@@ -2,9 +2,9 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_cors import CORS
-from src.db import db
+from .db import db
 
-from src.blueprints import api_bp
+from .blueprints import api_bp
 from .config import Config
 
 migrate = Migrate()
@@ -21,7 +21,7 @@ def create_app():
     CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
 
 
-    from src.blueprints import api_bp
+    from .blueprints import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
 
 

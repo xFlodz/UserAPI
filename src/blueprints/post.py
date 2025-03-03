@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.services.post_service import (
+from ..services.post_service import (
     create_post_service,
     delete_post_service,
     edit_post_service,

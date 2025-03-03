@@ -1,4 +1,4 @@
-from src.db import db
+from ..db import db
 from typing import Optional
 from datetime import datetime, timezone
 from sqlalchemy import ForeignKey

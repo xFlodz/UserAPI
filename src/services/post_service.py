@@ -3,9 +3,9 @@ from sqlalchemy import and_
 from flask import jsonify
 import json
 
-from src.db import db
-from src.models import Post, TagInPost, ImageInPost, VideoInPost, User, TextInPost, Tag
-from src.utils.post_utils import save_image, generate_post_address, convert_json_date_to_sqlite_format
+from ..db import db
+from ..models import Post, TagInPost, ImageInPost, VideoInPost, User, TextInPost, Tag
+from ..utils.post_utils import save_image, generate_post_address, convert_json_date_to_sqlite_format
 
 
 def create_post_service(data, current_user_email):

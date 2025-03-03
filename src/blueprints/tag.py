@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.services.tag_service import (
+from ..services.tag_service import (
     create_tag_service,
     delete_tag_service,
     get_all_tags_service
