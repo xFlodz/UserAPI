@@ -122,9 +122,26 @@ def edit_post_service(post_address, data, current_user_email):
         return jsonify({'error': str(e)}), 500
 
 
-def get_all_posts_service(date_filter_type=None, start_date=None, end_date=None, tags_filter=None):
+def get_all_posts_service(date_filter_type=None, start_date=None, end_date=None, tags_filter=None, current_user_email=None, only_not_approved=None):
     try:
-        query = Post.query.filter(Post.deleted_at.is_(None), Post.is_approved == True)
+        query = Post.query.filter(Post.deleted_at.is_(None))
+
+        if only_not_approved:
+            user = User.query.filter(User.email == only_not_approved, User.deleted_at.is_(None)).first()
+            if not user or user.role not in ['poster', 'admin']:
+                return jsonify({'error': 'У вас недостаточно прав'}), 403
+            query = query.filter(Post.is_approved == False)
+
+        if current_user_email:
+            user = User.query.filter(User.email == current_user_email, User.deleted_at.is_(None)).first()
+            if not user or user.role not in ['poster', 'admin']:
+                return jsonify({'error': 'У вас недостаточно прав'}), 403
+            query = query.filter(Post.creator_id == user.id)
+        else:
+            if not only_not_approved:
+                query = query.filter(Post.is_approved == True)
+
+
 
         if start_date and end_date:
             start_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
@@ -175,6 +192,7 @@ def get_all_posts_service(date_filter_type=None, start_date=None, end_date=None,
                 'main_image': post.main_image,
                 'date_range': json.loads(post.date_range),
                 'created_at': post.created_at,
+                'is_approved': post.is_approved,
                 'tags': tags,
                 'text': text,
                 'author': author
@@ -183,8 +201,6 @@ def get_all_posts_service(date_filter_type=None, start_date=None, end_date=None,
         return posts_list
     except Exception as e:
         raise e
-
-
 
 
 def get_post_by_address_service(post_address):
@@ -230,21 +246,43 @@ def get_post_by_address_service(post_address):
             'creator_id': post.creator_id,
             'author': author,
             'created_at': post.created_at,
+            'is_approved': post.is_approved,
             'text': text,
             'images': images,
             'videos': videos,
             'tags': tags
         }
 
-        print(post_data)
         return post_data
     except Exception as e:
         raise e
 
 
+def approve_post_service(post_address, current_user_email):
+    print('123')
+    try:
+        post = Post.query.filter(Post.address == post_address, Post.deleted_at.is_(None)).first()
+
+        if not post:
+            return {'error': 'Пост не найден'}, 404
+        user = User.query.filter(User.email == current_user_email, User.deleted_at.is_(None)).first()
+
+        if not user or user.role not in ['admin', 'poster']:
+            return {'error': 'У вас недостаточно прав для одобрения поста'}, 403
+
+        post.is_approved = True
+        db.session.commit()
+
+        print(post)
+
+        return {'message': 'Пост успешно одобрен'}
+    except Exception as e:
+        db.session.rollback()
+        return {'error': str(e)}, 500
+
+
 def _add_content_to_post(post_id, content, post_address, structure):
     for item in content:
-        print("Обрабатываем элемент:", item)  # Логируем входящий элемент
         if item['type'] == 'image':
             image_path = save_image(item['src'], post_address, 'image')
             image_in_post = ImageInPost(post_id=post_id, address=image_path, description=item.get('description', ''))

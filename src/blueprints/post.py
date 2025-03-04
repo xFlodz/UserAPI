@@ -5,7 +5,8 @@ from ..services.post_service import (
     delete_post_service,
     edit_post_service,
     get_all_posts_service,
-    get_post_by_address_service
+    get_post_by_address_service,
+    approve_post_service
 )
 
 post_bp = Blueprint('post', __name__)
@@ -51,7 +52,8 @@ def edit_post(post_address):
         return jsonify({'error': str(e)}), 400
 
 
-@post_bp.route('/get_all_posts', methods=['GET', 'POST'])
+@post_bp.route('/get_all_posts', methods=['POST'])
+@jwt_required(refresh=True, optional=True)
 def get_all_posts():
     try:
         filters = request.get_json()
@@ -61,8 +63,9 @@ def get_all_posts():
         start_date = filters.get('startDate')
         end_date = filters.get('endDate')
 
+        current_user_email = get_jwt_identity()
 
-        posts = get_all_posts_service(date_filter_type, start_date, end_date, tags_filter)
+        posts = get_all_posts_service(date_filter_type, start_date, end_date, tags_filter, current_user_email)
         return jsonify(posts), 200
 
     except Exception as e:
@@ -71,13 +74,43 @@ def get_all_posts():
 
 
 @post_bp.route('/get_post/<string:post_address>', methods=['GET'])
+@jwt_required(refresh=True)
 def get_post_by_address(post_address):
-
     try:
         post = get_post_by_address_service(post_address)
         if post:
             return jsonify(post), 200
         return jsonify({'error': 'Пост не найден'}), 404
 
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@post_bp.route('/get_all_not_approved_posts', methods=['POST'])
+@jwt_required(refresh=True)
+def get_all_not_approved_posts():
+    try:
+        filters = request.get_json()
+
+        date_filter_type = filters.get('dateFilterType')
+        tags_filter = filters.get('tagsFilter')
+        start_date = filters.get('startDate')
+        end_date = filters.get('endDate')
+
+        current_user_email = get_jwt_identity()
+        posts = get_all_posts_service(date_filter_type=date_filter_type, start_date=start_date, end_date=end_date, tags_filter=tags_filter, current_user_email=None, only_not_approved=current_user_email)
+        return jsonify(posts), 200
+    except Exception as e:
+        print(f"Ошибка на сервере: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@post_bp.route('/approve/<string:post_address>', methods=['PUT'])
+@jwt_required(refresh=True)
+def approve_post(post_address):
+    current_user_email = get_jwt_identity()
+    try:
+        result = approve_post_service(post_address, current_user_email)
+        return jsonify(result), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
