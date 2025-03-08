@@ -99,19 +99,20 @@ def get_all_editors(current_user_email):
     return jsonify(editors_list), 200
 
 
-def delete_editor_service(editor_id, current_user_email):
+def delete_editor_service(editor_email, current_user_email):
     user_current = User.query.filter_by(email=current_user_email).first()
     if user_current.role != 'admin':
         return jsonify({'error': 'У вас недостаточно прав'}), 403
 
-    editor = User.query.filter_by(id=editor_id, role='editor').first()
+
+    editor = User.query.filter_by(email=editor_email, role='poster').first()
     if not editor:
         return jsonify({'error': 'Редактор не найден'}), 404
 
     editor.role = 'user'
     db.session.commit()
 
-    return jsonify({'message': f'Редактор с ID {editor_id} успешно удален'}), 200
+    return jsonify({'message': f'Редактор с почтой {editor_email} успешно удален'}), 200
 
 
 

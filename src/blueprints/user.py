@@ -31,28 +31,27 @@ def logout():
 
 
 @user_bp.route('/add_editor', methods=['POST'])
-@jwt_required()
+@jwt_required(refresh=True)
 def add_editor():
     current_user_email = get_jwt_identity()
     data = request.get_json()
-    print(data['email'])
 
     return add_editor_service(data['email'], current_user_email)
 
 
 @user_bp.route('/get_editors', methods=['GET'])
-@jwt_required()
+@jwt_required(refresh=True)
 def get_editors():
     current_user_email = get_jwt_identity()
     return get_all_editors(current_user_email)
 
 
 @user_bp.route('/delete_editor', methods=['POST'])
-@jwt_required()
+@jwt_required(refresh=True)
 def delete_editor():
     current_user_email = get_jwt_identity()
     data = request.get_json()
-    return delete_editor(data['editor_id'], current_user_email)
+    return delete_editor_service(data['email'], current_user_email)
 
 
 

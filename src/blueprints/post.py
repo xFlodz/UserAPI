@@ -74,7 +74,6 @@ def get_all_posts():
 
 
 @post_bp.route('/get_post/<string:post_address>', methods=['GET'])
-@jwt_required(refresh=True)
 def get_post_by_address(post_address):
     try:
         post = get_post_by_address_service(post_address)

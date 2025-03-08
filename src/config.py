@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta
 
 class Config:
@@ -10,4 +11,4 @@ class Config:
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
     ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     MAX_IMAGE_SIZE = 16 * 1024 * 1024
-    UPLOAD_FOLDER = r'D:/Users/xFlod/PycharmProjects/backendFlask/src/assets'
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'src', 'assets')
