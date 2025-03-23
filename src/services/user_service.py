@@ -34,12 +34,6 @@ def login_user(data):
     return jsonify(access_token=access_token, refresh_token=refresh_token, role=user.role), 200
 
 
-def refresh_token():
-    current_user = get_jwt_identity()
-    new_access_token = create_access_token(identity=current_user)
-    return jsonify(access_token=new_access_token), 200
-
-
 def logout_user_service(current_user_email):
     user = User.query.filter_by(email=current_user_email).first()
     if not user:
@@ -114,6 +108,33 @@ def delete_editor_service(editor_email, current_user_email):
 
     return jsonify({'message': f'Редактор с почтой {editor_email} успешно удален'}), 200
 
+
+def get_user_by_id_service(id):
+    user = User.query.filter_by(id=id).first()
+    if user:
+        user_data = {
+            'id': user.id,
+            'email': user.email,
+            'name': user.name,
+            'surname': user.surname,
+            'role': user.role,
+        }
+        return user_data
+    return jsonify({'message': 'Пользователь не найден'}), 404
+
+
+def get_user_by_email_service(email):
+    user = User.query.filter_by(email=email).first()
+    if user:
+        user_data = {
+            'id': user.id,
+            'email': user.email,
+            'name': user.name,
+            'surname': user.surname,
+            'role': user.role,
+        }
+        return user_data
+    return jsonify({'message': 'Пользователь не найден'}), 404
 
 
 def get_adm():

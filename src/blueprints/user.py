@@ -1,6 +1,7 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..services.user_service import register_user, login_user, refresh_token, logout_user_service, get_adm, add_editor_service, get_all_editors, delete_editor_service
+from ..services.user_service import register_user, login_user, logout_user_service, get_adm, add_editor_service, \
+    get_all_editors, delete_editor_service, get_user_by_id_service, get_user_by_email_service
 
 user_bp = Blueprint('user', __name__)
 
@@ -15,13 +16,6 @@ def register():
 def login():
     data = request.get_json()
     return login_user(data)
-
-
-@user_bp.route('/refresh', methods=['POST'])
-@jwt_required(refresh=True)
-def refresh():
-    return refresh_token()
-
 
 @user_bp.route('/logout', methods=['POST'])
 @jwt_required()
@@ -53,6 +47,15 @@ def delete_editor():
     data = request.get_json()
     return delete_editor_service(data['email'], current_user_email)
 
+
+@user_bp.route('get_user_by_id/<id>', methods=['GET'])
+def get_user_by_id(id):
+    return get_user_by_id_service(id)
+
+
+@user_bp.route('get_user_by_email/<email>', methods=['GET'])
+def get_user_by_email(email):
+    return get_user_by_email_service(email)
 
 
 @user_bp.route('/adm')
