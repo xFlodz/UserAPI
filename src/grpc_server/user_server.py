@@ -35,7 +35,7 @@ class gRPCUserService(user_pb2_grpc.gRPCUserServiceServicer):
 def run_grpc_server(app):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     user_pb2_grpc.add_gRPCUserServiceServicer_to_server(gRPCUserService(app), server)
-    server.add_insecure_port('127.0.0.1:50053')  # Порт для gRPC сервера
+    server.add_insecure_port('0.0.0.0:50053')  # Порт для gRPC сервера
     print("User gRPC Server started on port 50053")
     server.start()
     server.wait_for_termination()
