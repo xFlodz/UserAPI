@@ -31,7 +31,7 @@ def login_user(data):
     access_token = create_access_token(identity=user.email)
     refresh_token = create_refresh_token(identity=user.email)
 
-    return jsonify(access_token=access_token, refresh_token=refresh_token, role=user.role), 200
+    return jsonify(access_token=access_token, refresh_token=refresh_token, role=user.role, id=user.id), 200
 
 
 def logout_user_service(current_user_email):
@@ -135,6 +135,57 @@ def get_user_by_email_service(email):
         }
         return user_data
     return jsonify({'message': 'Пользователь не найден'}), 404
+
+
+def change_password_service(data, current_user_email):
+    user = User.query.filter_by(email=current_user_email).first()
+    if not user:
+        return jsonify({'error': 'У вас нет прав'}), 403
+
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+
+    if not user.check_password(old_password):
+        return jsonify({'error': 'Старый пароль неверен'}), 400
+
+    user.set_password(new_password)
+    db.session.commit()
+
+    return jsonify({'message': 'Пароль успешно изменен'}), 200
+
+
+def update_profile_service(data, current_user_email):
+    user = User.query.filter_by(email=current_user_email).first()
+    if not user:
+        return jsonify({'error': 'У вас нет прав'}), 403
+
+    name = data.get('name')
+    surname = data.get('surname')
+    email = data.get('email')
+
+    if email and email != user.email:
+        if User.query.filter_by(email=email).first():
+            return jsonify({'error': 'Этот email уже занят'}), 400
+        user.email = email
+
+    if name:
+        user.name = name
+    if surname:
+        user.surname = surname
+
+    db.session.commit()
+
+    updated_data = {
+        'id': user.id,
+        'email': user.email,
+        'name': user.name,
+        'surname': user.surname,
+        'role': user.role
+    }
+
+    return jsonify({'message': 'Профиль обновлен', 'user': updated_data}), 200
+
+
 
 
 def get_adm():

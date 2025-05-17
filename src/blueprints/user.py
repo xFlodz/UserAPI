@@ -1,7 +1,8 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..services.user_service import register_user, login_user, logout_user_service, get_adm, add_editor_service, \
-    get_all_editors, delete_editor_service, get_user_by_id_service, get_user_by_email_service
+    get_all_editors, delete_editor_service, get_user_by_id_service, get_user_by_email_service, update_profile_service, \
+    change_password_service
 
 user_bp = Blueprint('user', __name__)
 
@@ -56,6 +57,22 @@ def get_user_by_id(id):
 @user_bp.route('get_user_by_email/<email>', methods=['GET'])
 def get_user_by_email(email):
     return get_user_by_email_service(email)
+
+
+@user_bp.route('/change_password', methods=['POST'])
+@jwt_required()
+def change_password():
+    current_user_email = get_jwt_identity()
+    data = request.get_json()
+    return change_password_service(data, current_user_email)
+
+
+@user_bp.route('/update_profile', methods=['POST'])
+@jwt_required()
+def update_profile():
+    current_user_email = get_jwt_identity()
+    data = request.get_json()
+    return update_profile_service(data, current_user_email)
 
 
 @user_bp.route('/adm')
