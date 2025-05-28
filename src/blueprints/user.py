@@ -75,9 +75,9 @@ def update_profile():
     return update_profile_service(data, current_user_email)
 
 
-@user_bp.route('/adm')
-def adm():
-    get_adm()
+#@user_bp.route('/adm')
+#def adm():
+    #get_adm()
 
 
 
