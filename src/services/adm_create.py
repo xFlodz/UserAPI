@@ -21,7 +21,7 @@ password_salt = os.urandom(16).hex()
 salted_password = '1234' + password_salt
 password_hash = generate_password_hash(salted_password)
 
-cursor.execute("SELECT id FROM \"user\" WHERE email = 'admin'")
+cursor.execute("SELECT id FROM \"user\" WHERE role = 'admin'")
 if not cursor.fetchone():
     cursor.execute("""
         INSERT INTO "user" (
