@@ -1,8 +1,8 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..services.user_service import register_user, login_user, logout_user_service, get_adm, add_editor_service, \
-    get_all_editors, delete_editor_service, get_user_by_id_service, get_user_by_email_service, update_profile_service, \
-    change_password_service
+from ..services.user_service import register_user, login_user, logout_user_service, get_adm, change_role_service, \
+    get_all_editors, delete_user_service, get_user_by_id_service, get_user_by_email_service, update_profile_service, \
+    change_password_service, approve_user_service
 
 user_bp = Blueprint('user', __name__)
 
@@ -25,28 +25,34 @@ def logout():
     return logout_user_service(current_user_email)
 
 
-@user_bp.route('/add_editor', methods=['POST'])
+@user_bp.route('/change_role', methods=['POST'])
 @jwt_required(refresh=True)
-def add_editor():
+def change_role():
     current_user_email = get_jwt_identity()
     data = request.get_json()
 
-    return add_editor_service(data['email'], current_user_email)
+    return change_role_service(data, current_user_email)
 
 
 @user_bp.route('/get_editors', methods=['GET'])
-@jwt_required(refresh=True)
 def get_editors():
-    current_user_email = get_jwt_identity()
-    return get_all_editors(current_user_email)
+    return get_all_editors()
 
 
-@user_bp.route('/delete_editor', methods=['POST'])
+@user_bp.route('/approve_user', methods=['POST'])
 @jwt_required(refresh=True)
-def delete_editor():
+def approve_user():
     current_user_email = get_jwt_identity()
     data = request.get_json()
-    return delete_editor_service(data['email'], current_user_email)
+    return approve_user_service(current_user_email, data)
+
+
+@user_bp.route('/delete_user', methods=['POST'])
+@jwt_required(refresh=True)
+def delete_user():
+    current_user_email = get_jwt_identity()
+    data = request.get_json()
+    return delete_user_service(data, current_user_email)
 
 
 @user_bp.route('get_user_by_id/<id>', methods=['GET'])
@@ -71,13 +77,14 @@ def change_password():
 @jwt_required()
 def update_profile():
     current_user_email = get_jwt_identity()
-    data = request.get_json()
-    return update_profile_service(data, current_user_email)
+    data = request.form
+    image_file = request.files.get('image')
+    return update_profile_service(data, current_user_email, image_file)
 
 
-#@user_bp.route('/adm')
-#def adm():
-    #get_adm()
+@user_bp.route('/adm')
+def adm():
+    get_adm()
 
 
 

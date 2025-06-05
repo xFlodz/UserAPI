@@ -12,6 +12,11 @@ class User(db.Model, UserMixin):
     role: Mapped[str] = mapped_column(db.String(20))
     name: Mapped[str] = mapped_column(db.String(20))
     surname: Mapped[str] = mapped_column(db.String(20))
+    thirdname: Mapped[str] = mapped_column(db.String(20))
+    phone: Mapped[str] = mapped_column(db.String(20))
+    telegram_id: Mapped[str] = mapped_column(db.String(50))
+    image: Mapped[str] = mapped_column(db.String(100), default=None, nullable=True)
+    is_approved: Mapped[bool] = mapped_column(db.Boolean)
 
     password_salt: Mapped[str] = mapped_column(db.String(32), nullable=False)
     password_hash: Mapped[str] = mapped_column(db.String(256), nullable=False)

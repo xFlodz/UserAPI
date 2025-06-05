@@ -2,7 +2,7 @@ from flask import jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity
 from ..models.user_model import User
 from .. import db
-from ..utils.user_utils import generate_password
+from ..utils.user_utils import generate_password, process_and_save_profile_image
 
 
 def register_user(data):
@@ -12,9 +12,14 @@ def register_user(data):
     new_user = User(
         email=data['email'],
         role='user',
-        name=data['name'],
-        surname=data['surname']
+        name=data.get('name'),
+        surname=data.get('surname'),
+        thirdname=data.get('thirdname'),
+        phone=data.get('phone'),
+        telegram_id=data.get('telegram_id'),
+        is_approved=False
     )
+
     new_user.set_password(data['password'])
 
     db.session.add(new_user)
@@ -27,6 +32,9 @@ def login_user(data):
     user = User.query.filter_by(email=data['login']).first()
     if not user or not user.check_password(data['password']):
         return jsonify({'error': 'Неверный логин или пароль'}), 401
+    if user.is_approved is False:
+        return jsonify({'error': 'Ваш профиль еще не подтвержден'}), 401
+
 
     access_token = create_access_token(identity=user.email)
     refresh_token = create_refresh_token(identity=user.email)
@@ -42,71 +50,70 @@ def logout_user_service(current_user_email):
     return jsonify({'message': 'Вы успешно вышли'}), 200
 
 
-def add_editor_service(email, current_user_email):
+def change_role_service(data, current_user_email):
     user_current = User.query.filter_by(email=current_user_email).first()
     if user_current.role != 'admin':
         return jsonify({'error': 'У вас недостаточно прав'}), 403
 
-    user = User.query.filter_by(email=email).first()
+    new_role = data.get('newRole')
+    user_id = data.get('userId')
+
+    user = User.query.filter_by(id=user_id).first()
 
     if not user:
-        new_user = User(
-            email=email,
-            role='poster',
-            name='Аноним',
-            surname='Аноним'
-        )
+        return jsonify({'message': 'Такого пользователя нет'}), 403
 
-        password = generate_password()
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
-
-        print('Пользователь зарегестрирован', password)
-        #Добавить отправку на почту
-        return jsonify({'message': 'Зарегестрирован новый редактор'}), 200
-
-    if user.role == 'poster':
-        return jsonify({'message': 'Пользователь уже является редактором'}), 200
-
-    user.role = 'poster'
+    user.role = new_role
     db.session.commit()
 
-    return jsonify({'message': f'Пользователь {email} теперь редактор'}), 200
+    return jsonify({'message': f'Роль пользователя изменена'}), 200
 
 
-def get_all_editors(current_user_email):
-    user_current = User.query.filter_by(email=current_user_email).first()
-    if user_current.role != 'admin':
-        return jsonify({'error': 'У вас недостаточно прав'}), 403
-
-    editors = User.query.filter_by(role='poster').all()
+def get_all_editors():
+    editors = User.query.filter(User.role.in_(['user', 'poster'])).order_by(User.surname).all()
 
     if not editors:
         return jsonify([]), 200
 
     editors_list = [
-        {'id': editor.id, 'email': editor.email, 'name': editor.name, 'surname': editor.surname}
+        {'id': editor.id,
+         'name': editor.name,
+         'surname': editor.surname,
+         'thirdname': editor.thirdname,
+         'role': editor.role,
+         'image': editor.image,
+         'is_approved': editor.is_approved}
         for editor in editors
     ]
 
     return jsonify(editors_list), 200
 
+def approve_user_service(current_user_email, data):
+    user_current = User.query.filter_by(email=current_user_email).first()
+    if user_current.role != 'admin':
+        return jsonify({'error': 'У вас недостаточно прав'}), 403
 
-def delete_editor_service(editor_email, current_user_email):
+    user_id = data.get('user_id')
+    user = User.query.filter_by(id=user_id).first()
+    user.is_approved = True
+    db.session.commit()
+
+    return jsonify({'message': f'Пользователь успешно одобрен'}), 200
+
+def delete_user_service(data, current_user_email):
+
+    user_id = data.get('userId')
+
     user_current = User.query.filter_by(email=current_user_email).first()
     if user_current.role != 'admin':
         return jsonify({'error': 'У вас недостаточно прав'}), 403
 
 
-    editor = User.query.filter_by(email=editor_email, role='poster').first()
-    if not editor:
-        return jsonify({'error': 'Редактор не найден'}), 404
-
-    editor.role = 'user'
+    user = User.query.filter_by(id=user_id).first()
+    db.session.delete(user)
     db.session.commit()
 
-    return jsonify({'message': f'Редактор с почтой {editor_email} успешно удален'}), 200
+    return jsonify({'message': f'Пользователь удален'}), 200
 
 
 def get_user_by_id_service(id):
@@ -118,6 +125,11 @@ def get_user_by_id_service(id):
             'name': user.name,
             'surname': user.surname,
             'role': user.role,
+            'thirdname': user.thirdname,
+            'telegram_id': user.telegram_id,
+            'image': user.image,
+            'phone': user.phone,
+            'is_approved': user.is_approved
         }
         return user_data
     return jsonify({'message': 'Пользователь не найден'}), 404
@@ -132,6 +144,11 @@ def get_user_by_email_service(email):
             'name': user.name,
             'surname': user.surname,
             'role': user.role,
+            'thirdname': user.thirdname,
+            'telegram_id': user.telegram_id,
+            'image': user.image,
+            'phone': user.phone,
+            'is_approved': user.is_approved
         }
         return user_data
     return jsonify({'message': 'Пользователь не найден'}), 404
@@ -154,7 +171,7 @@ def change_password_service(data, current_user_email):
     return jsonify({'message': 'Пароль успешно изменен'}), 200
 
 
-def update_profile_service(data, current_user_email):
+def update_profile_service(data, current_user_email, image):
     user = User.query.filter_by(email=current_user_email).first()
     if not user:
         return jsonify({'error': 'У вас нет прав'}), 403
@@ -162,6 +179,9 @@ def update_profile_service(data, current_user_email):
     name = data.get('name')
     surname = data.get('surname')
     email = data.get('email')
+    thirdname = data.get('thirdname')
+    phone = data.get('phone')
+    telegram_id = data.get('telegram_id')
 
     if email and email != user.email:
         if User.query.filter_by(email=email).first():
@@ -172,6 +192,20 @@ def update_profile_service(data, current_user_email):
         user.name = name
     if surname:
         user.surname = surname
+    if thirdname:
+        user.thirdname = thirdname
+    if phone:
+        user.phone = phone
+    if telegram_id:
+        user.telegram_id = telegram_id
+
+    if image:
+        print('image')
+        image_path = process_and_save_profile_image(image, user.id)
+        if image_path:
+            user.image = image_path.replace("\\", "/")
+        else:
+            return jsonify({'error': 'Ошибка обработки изображения'}), 400
 
     db.session.commit()
 
@@ -180,7 +214,11 @@ def update_profile_service(data, current_user_email):
         'email': user.email,
         'name': user.name,
         'surname': user.surname,
-        'role': user.role
+        'role': user.role,
+        'thirdname': user.thirdname,
+        'telegram_id': user.telegram_id,
+        'image': user.image,
+        'phone': user.phone
     }
 
     return jsonify({'message': 'Профиль обновлен', 'user': updated_data}), 200
@@ -191,8 +229,8 @@ def update_profile_service(data, current_user_email):
 def get_adm():
     user = User.query.filter_by(email='admin').first()
     if not user:
-        user = User(email='admin', role='admin', name='Иван', surname='Иван')
-        user2 = User(email='poster', role='poster', name='Иван', surname='Иван')
+        user = User(email='admin', role='admin', name='Иван', surname='Иван', thirdname='Иван', phone='+79651111111', telegram_id='@paveldurov', is_approved=True)
+        user2 = User(email='poster', role='poster', name='Иван', surname='Иван', thirdname='Иван', phone='+79651111111', telegram_id='@paveldurov', is_approved=True)
         user.set_password('1234')
         user2.set_password('1234')
         db.session.add(user)
